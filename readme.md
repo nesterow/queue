@@ -1,6 +1,7 @@
-# Queue
+# Que
 
 A fault-tolerant PostgreSQL backed message queue for Deno.
+
 - No dependencies
 - Scales horisontaly
 - Scales vertically
@@ -29,8 +30,8 @@ DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/queues
 The queue handles messages in recieving order as soon as possible.
 
 ```typescript
-import { Queue } from './mod.ts'
-import type { TimeoutError } from './mod.ts' 
+import { Queue } from 'https://deno.land/x/que/mod.ts'
+import type { TimeoutError } from 'https://deno.land/x/que/mod.ts' 
 
 const que = new Queue({
   name: "que-uniq-name"
@@ -69,7 +70,7 @@ The Queue methods are self-descriptive.
 The constructor options requires providing the `name`
 
 ```typescript
-import { Queue } from './mod.ts'
+import { Queue } from 'https://deno.land/x/que/mod.ts'
 
 const que = new Queue({
   name: "name",
@@ -133,6 +134,7 @@ const exec = new Executor({
 The queue workers can work on any machines as long as utilizing one database. The only thing to keep in mind is that the instances are not going to syncronize `pause` and `close` states.
 
 ## Execution order
+
 The queue handles messages in recieving order, however the *execution order* is only guarantied when utilizing a single instance. 
 If you need the  *execution order* in tact when scaling the workers - it is possible, relate to the known patterns and techniques.
 
