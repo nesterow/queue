@@ -1,8 +1,8 @@
 # Que
 
-A fault-tolerant PostgreSQL backed scheduler and message queue for Deno.
+A fault-tolerant cron scheduler and message queue for Deno backed by PostgreSQL.
 
-- No dependencies
+- No dependencies (pg only)
 - Cron pattern support + expire & once
 - Scales horisontaly
 - Scales vertically
