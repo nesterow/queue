@@ -69,9 +69,9 @@ export default class Queue {
     // TODO: check if worker
     if (self.name) {
       // @ts-ignore: no index signature
-      self.postMessage({ 
-        type: "close", 
-        name: self.name 
+      self.postMessage({
+        type: "close",
+        name: self.name,
       });
     }
   }
@@ -86,11 +86,10 @@ export default class Queue {
     }
     if (self.name) {
       // @ts-ignore: no index signature
-      self.postMessage({ 
-        type: "pause", 
-        name: 
-        self.name, 
-        payload: state 
+      self.postMessage({
+        type: "pause",
+        name: self.name,
+        payload: state,
       });
     }
   }

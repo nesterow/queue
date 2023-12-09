@@ -8,3 +8,4 @@ export type {
 export { default as Storage } from "./storage.ts";
 export type { ListenCallback, QueueOptions } from "./queue.ts";
 export { default as Queue, TimeoutError } from "./queue.ts";
+export * as scheduler from "./schedule.ts";
