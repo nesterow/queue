@@ -29,12 +29,12 @@ import { scheduler } from "https://deno.land/x/que/mod.ts";
 
 await scheduler.start();
 
-scheduler.register('fetch', async (ctx, onError) => {
+scheduler.register("fetch", async (ctx, onError) => {
   onError((e) => {
-    console.error(e)
-  })
-  await fetch(ctx.url)
-})
+    console.error(e);
+  });
+  await fetch(ctx.url);
+});
 
 // fetch some resource every second
 const fetchEverySec = {
@@ -45,10 +45,9 @@ const fetchEverySec = {
 };
 
 await scheduler.schedule(fetchEverySec);
-// the next line doesn't have effect, 
+// the next line doesn't have effect,
 // because the task is the same
 await scheduler.schedule(fetchEverySec);
-
 ```
 
 Execute once at midnight, and deactivate the task:
@@ -59,7 +58,7 @@ const executeOnce = {
   pattern: "0 0 * * *",
   description: "fetch url",
   context: { url: "http://google.com" },
-  once: true
+  once: true,
 };
 await scheduler.schedule(executeOnce);
 ```
@@ -72,7 +71,7 @@ const expireInHour = {
   pattern: "* * * * * *",
   description: "fetch url",
   context: { url: "http://google.com" },
-  expire_at: new Date(new Date().getTime() + 1000 * 60 * 60)
+  expire_at: new Date(new Date().getTime() + 1000 * 60 * 60),
 };
 await scheduler.schedule(expireInHour);
 ```

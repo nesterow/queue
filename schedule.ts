@@ -4,7 +4,10 @@ import { parseCronExpression } from "npm:cron-schedule@4.0.0";
 
 const registry: Record<
   string,
-  (ctx: Record<string, unknown>, onError? : (handler: (e: Error) => void) => void) => Promise<void>
+  (
+    ctx: Record<string, unknown>,
+    onError?: (handler: (e: Error) => void) => void,
+  ) => Promise<void>
 > = {};
 
 interface TaskObject {
@@ -34,9 +37,7 @@ class Task {
   ) {}
 
   isReady(): boolean {
-    const cron = parseCronExpression(this.pattern);
-    const nextRun = cron.getNextDate();
-    return this.next_run <= nextRun;
+    return new Date(this.next_run) <= new Date();
   }
 
   async exec(): Promise<Date | false> {
@@ -211,22 +212,22 @@ class Storage {
   static async create_table(): ReturnType<postgres.PoolClient["queryObject"]> {
     const client = await this.client;
     try {
-      return client.queryObject`
-      CREATE TABLE IF NOT EXISTS cron_d_tasks (
-        id INT NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-        name VARCHAR(255) NOT NULL,
-        type VARCHAR(255) NOT NULL DEFAULT 'task',
-        context JSONB NOT NULL DEFAULT '{}',
-        pattern VARCHAR(255) NOT NULL,
-        description TEXT,
-        next_run TIMESTAMP NOT NULL,
-        once BOOLEAN NOT NULL DEFAULT FALSE,
-        expires_at TIMESTAMP,
-        is_running BOOLEAN NOT NULL DEFAULT FALSE,
-        is_active BOOLEAN NOT NULL DEFAULT TRUE
-      );
-      CREATE UNIQUE INDEX IF NOT EXISTS cron_d_tasks_name_idx ON cron_d_tasks (name);
-    `;
+      return client.queryObject(`
+        CREATE TABLE IF NOT EXISTS cron_d_tasks (
+          id INT NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+          name VARCHAR(255) NOT NULL,
+          type VARCHAR(255) NOT NULL DEFAULT 'task',
+          context JSONB NOT NULL DEFAULT '{}',
+          pattern VARCHAR(255) NOT NULL,
+          description TEXT,
+          next_run TIMESTAMP NOT NULL,
+          once BOOLEAN NOT NULL DEFAULT FALSE,
+          expires_at TIMESTAMP,
+          is_running BOOLEAN NOT NULL DEFAULT FALSE,
+          is_active BOOLEAN NOT NULL DEFAULT TRUE
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS cron_d_tasks_name_idx ON cron_d_tasks (name);
+      `);
     } finally {
       client.release();
     }
@@ -235,10 +236,9 @@ class Storage {
   static async drop_table(): ReturnType<postgres.PoolClient["queryObject"]> {
     const client = await this.client;
     try {
-      return client.queryObject`
-      DROP TABLE IF EXISTS cron_d_tasks;
-      --DROP INDEX IF EXISTS cron_d_tasks_name_idx;
-    `;
+      return client.queryObject(`
+        DROP TABLE IF EXISTS cron_d_tasks;
+      `);
     } finally {
       client.release();
     }
@@ -276,7 +276,7 @@ class Cron {
     for await (const task of Storage.select()) {
       if (this.#is_stop) {
         return;
-      } 
+      }
       if (task.expires_at && task.expires_at < new Date()) {
         await Storage.delete(task).catch(console.error);
         continue;
