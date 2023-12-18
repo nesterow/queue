@@ -307,9 +307,6 @@ export default class implements QueueStorage {
         CREATE UNIQUE INDEX IF NOT EXISTS ${this._pending_table}_uuid_idx ON ${this._pending_table} (uuid);
         CREATE UNIQUE INDEX IF NOT EXISTS ${this._fail_table}_uuid_idx ON ${this._fail_table} (uuid);
 
-        INSERT INTO ${this.name}_state (created_at, updated_at)
-        VALUES (NOW(), NOW());
-
         DO $$
         DECLARE
           intervals VARCHAR[] := ARRAY[${
