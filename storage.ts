@@ -8,9 +8,17 @@ type JSONValue =
   | JSONObject
   | JSONObject[];
 
+type UUID = string;
+
 interface JSONObject {
   [key: string]: JSONValue;
 }
+
+type QueueItemStatus = {
+  pending: boolean;
+  done: boolean;
+  fail: boolean;
+};
 
 export interface QueueItem {
   id?: number;
@@ -54,7 +62,7 @@ export interface QueueStorage {
   pool: postgres.Pool;
   is_initialized: boolean;
   initialize(): Promise<void>;
-  push(...items: QueueItem[]): Promise<void>;
+  push(...items: QueueItem[]): Promise<UUID[]>;
   select(length?: number): Promise<QueueItem[]>;
   commit(...items: QueueItem[]): Promise<void>;
   fail(item: QueueItem, error_data: string): Promise<FailQueueItem>;
@@ -96,19 +104,23 @@ export default class implements QueueStorage {
     this.is_initialized = true;
   }
 
-  async push(...items: QueueMsg[]): Promise<void> {
+  async push(...items: QueueMsg[]): Promise<UUID[]> {
     this._guard_initialized();
     const connection = await this.pool.connect();
     try {
       const now = new Date();
+      const _uuid_array = items.map(() => crypto.randomUUID());
       await connection.queryObject(`
         INSERT INTO ${this._pending_table} (uuid, type, payload, pending, timeout_ms, created_at, updated_at)
         VALUES ${
-        items.map((item) =>
-          `('${crypto.randomUUID()}', '${item.type}', '${item.payload}', false, ${item.timeout_ms}, '${now.toISOString()}', '${now.toISOString()}')`
+        items.map((item, i) =>
+          `('${
+            _uuid_array[i]
+          }', '${item.type}', '${item.payload}', false, ${item.timeout_ms}, '${now.toISOString()}', '${now.toISOString()}')`
         ).join(", ")
       }
       `);
+      return Promise.resolve(_uuid_array);
     } finally {
       connection.release();
     }
@@ -218,6 +230,30 @@ export default class implements QueueStorage {
           FOR UPDATE SKIP LOCKED
         )
       `);
+    } finally {
+      connection.release();
+    }
+  }
+
+  async status(uuid: string): Promise<QueueItemStatus> {
+    this._guard_initialized();
+    const connection = await this.pool.connect();
+    try {
+      type _ReturnObject = { [key: string]: number };
+      const result = (await connection.queryObject(`
+        SELECT
+          (SELECT COUNT(*) FROM ${this._pending_table} WHERE uuid = '${uuid}') as pending,
+          (SELECT COUNT(*) FROM ${this._done_table} WHERE uuid = '${uuid}') as done,
+          (SELECT COUNT(*) FROM ${this._fail_table} WHERE uuid = '${uuid}') as fail;
+      `)).rows[0] as _ReturnObject;
+
+      return Object.keys(result).reduce(
+        (acc: Partial<QueueItemStatus>, key: string) => {
+          acc[key as keyof QueueItemStatus] = Boolean(result[key]);
+          return acc;
+        },
+        {} as Partial<QueueItemStatus>,
+      ) as QueueItemStatus;
     } finally {
       connection.release();
     }

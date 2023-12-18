@@ -135,7 +135,8 @@ const que = new Queue({
 })
 
 que.listen(callback: ListenCallback)
-que.enqueue(..msgs: { type: string, payload: JsonValue, timeout_ms?: number })
+que.enqueue(..msgs: { type: string, payload: JsonValue, timeout_ms?: number }) // uuid[]
+que.statusOf(uuid: string)
 que.pause(state: boolean)
 que.close()
 ```

@@ -63,6 +63,11 @@ export default class Queue {
     })));
   }
 
+  async statusOf(uuid: string) {
+    await this.#storage.initialize();
+    return this.#storage.status(uuid);
+  }
+
   close(): void {
     this.#closed = true;
     clearTimeout(this.#timeout);

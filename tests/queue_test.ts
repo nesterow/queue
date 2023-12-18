@@ -55,8 +55,16 @@ test({
       results.push(data);
       return data.payload;
     });
-    await queue.enqueue(...items);
+    const ids = await queue.enqueue(...items);
+    for (const id of ids) {
+      const status = await queue.statusOf(id);
+      assert(status.pending)
+    }
     await new Promise((resolve) => setTimeout(resolve, 17500));
+    for (const id of ids) {
+      const status = await queue.statusOf(id);
+      assert(status.fail)
+    }
     await queue.close();
     await queue.storage._drop_tables();
     assert(results.length === 0);
